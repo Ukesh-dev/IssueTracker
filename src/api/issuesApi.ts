@@ -1,19 +1,28 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios"
 import api from "./api"
-import { Issue, IssueNumberProps, Labels, SearchType, User } from "./types"
+import {
+  Issue,
+  IssueCommentsProps,
+  IssueNumberProps,
+  Labels,
+  SearchType,
+  User,
+} from "./types"
 
 export const fetchIssues = async () => {
-  return api.get<Issue>("/api/issues").then((res) => res.data)
+  return api.get<Issue[]>("/api/issues").then((res) => res.data)
 }
 export const fetchIssuesWithLabelsAndStaus = async (
   statusString: string,
   labelString: string,
   config: AxiosRequestConfig = {}
 ) => {
-  return api.get<Issue[]>(`/api/issues?${labelString}${statusString}`, config)
+  return api
+    .get<Issue[]>(`/api/issues?${labelString}${statusString}`, config)
+    .then((res) => res.data)
 }
 
-export const fetchIssueDetail = async (issueNumber: number) => {
+export const fetchIssueDetail = async (issueNumber: string) => {
   return api
     .get<IssueNumberProps>(`/api/issues/${issueNumber}`)
     .then((res) => res.data)
@@ -30,17 +39,20 @@ export const searchIssues = async (
   searchValue: string,
   config: AxiosRequestConfig = {}
 ) => {
-  return api.get<SearchType>(`/api/search/issues?q=${searchValue}`, config)
+  return api
+    .get<SearchType>(`/api/search/issues?q=${searchValue}`, config)
+    .then((res) => res.data)
 }
 
 export const fetchIssueComments = async (
-  issueNumber: number,
-  pageParam: number | string = ""
-) => {
+  issueNumber: string,
+  pageParam: string = ""
+) =>
   api
-    .get(`api/issues/${issueNumber}/comments?page=${pageParam}`)
+    .get<IssueCommentsProps[]>(
+      `api/issues/${issueNumber}/comments?page=${pageParam}`
+    )
     .then((res) => res.data)
-}
 
 export const fetchAllPossibleStatus = async () =>
   api.get(`/api/possibleStatus`).then((res) => res.data)

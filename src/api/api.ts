@@ -1,8 +1,14 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios"
 
+const getEnvironment = () => {
+  if (import.meta.env.DEV) {
+    return "development"
+  }
+  if (import.meta.env.PROD) return "production"
+}
+
 const axiosParams = {
-  baseURL: "/",
-  // process.env.Node_ENV === "developement" ? "http://127.0.0.1:5173" : "/",
+  baseURL: getEnvironment() === "development" ? "http://127.0.0.1:5173" : "/",
 }
 
 const axiosInstance = axios.create(axiosParams)

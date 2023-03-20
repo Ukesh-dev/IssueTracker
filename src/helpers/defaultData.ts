@@ -51,6 +51,35 @@ export const defaultComments = [
     id: "comment_1",
     issue_id: "issue_1",
   },
+  {
+    comment: "This is a test issue.",
+    createdBy: "u_1",
+    createdDate: new Date(),
+    id: "comment_1",
+    issue_id: "issue_1",
+  },
+
+  {
+    comment: "This is a test issue.",
+    createdBy: "u_1",
+    createdDate: new Date(),
+    id: "comment_1",
+    issue_id: "issue_1",
+  },
+  {
+    comment: "This is a test issue.",
+    createdBy: "u_1",
+    createdDate: new Date(),
+    id: "comment_1",
+    issue_id: "issue_1",
+  },
+  {
+    comment: "This is a test issue.",
+    createdBy: "u_1",
+    createdDate: new Date(),
+    id: "comment_1",
+    issue_id: "issue_1",
+  },
 ]
 
 export const possibleStatus = [

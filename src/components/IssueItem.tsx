@@ -2,12 +2,9 @@ import { Link } from "react-router-dom"
 import { GoIssueOpened, GoIssueClosed, GoComment } from "react-icons/go"
 import { relativeDate } from "../helpers/relativeDate"
 import { fetchIssueDetail } from "../api/issuesApi"
-// import { useUserData } from "../helpers/useUserData"
-// import { Label } from "./Label"
 import { useQueryClient } from "@tanstack/react-query"
-// import fetchWithError from "../helpers/fetchWithError"
 import { Issue, IssueCommentsProps } from "../api/types"
-import { useUserData } from "../helpers/useUserData"
+import { useUserData } from "../helpers/hooks/useUserData"
 import { Label } from "./Label"
 
 export function IssueItem({
@@ -27,7 +24,7 @@ export function IssueItem({
     <li
       onMouseEnter={() => {
         queryClient.prefetchQuery(["issues", number.toString()], () =>
-          fetchIssueDetail(number)
+          fetchIssueDetail(`${number}`)
         )
         // queryClient.prefetchInfiniteQuery(
         //   ["issues", number.toString(), "comments"],

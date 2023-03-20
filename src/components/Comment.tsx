@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query"
 import { fetchUsers } from "../api/issuesApi"
-import { IssueCommentsProps } from "../api/types"
+import { Issue, IssueCommentsProps, User } from "../api/types"
+import { defaultUsers } from "../helpers/defaultData"
 import { relativeDate } from "../helpers/relativeDate"
 
 export default function Comment({
@@ -7,9 +9,12 @@ export default function Comment({
   createdBy,
   createdDate,
 }: IssueCommentsProps) {
-  const userQuery = fetchUsers(createdBy)
+  const commentQuery = useQuery<User>(["comment", { createdBy }], () =>
+    fetchUsers(createdBy)
+  )
+  // const commentQuery = defaultUsers
 
-  if (userQuery.isLoading)
+  if (commentQuery.isLoading)
     return (
       <div className="comment">
         <div>
@@ -20,10 +25,19 @@ export default function Comment({
 
   return (
     <div className="comment">
-      <img src={userQuery.data.profilePictureUrl} alt="Commenter Avatar" />
+      {/* <img src={commentQuery[0].profilePictureUrl} alt="Commenter Avatar" />
       <div>
         <div className="comment-header">
-          <span>{userQuery.data.name}</span> commented{" "}
+          <span>{commentQuery[0].name}</span> commented{" "}
+          <span>{relativeDate(createdDate)}</span>
+        </div>
+        <div className="comment-body">{comment}</div>
+      </div> */}
+
+      <img src={commentQuery.data?.profilePictureUrl} alt="Commenter Avatar" />
+      <div>
+        <div className="comment-header">
+          <span>{commentQuery.data?.name}</span> commented{" "}
           <span>{relativeDate(createdDate)}</span>
         </div>
         <div className="comment-body">{comment}</div>

@@ -1,7 +1,8 @@
-import { useQueries } from "@tanstack/react-query"
+import { useQueries, useQuery } from "@tanstack/react-query"
 import { GoIssueClosed, GoIssueOpened } from "react-icons/go"
 import { useParams } from "react-router-dom"
-import { IssueNumberProps } from "../api/types"
+import { fetchIssueComments, fetchIssueDetail } from "../api/issuesApi"
+import { Issue, IssueCommentsProps, IssueNumberProps } from "../api/types"
 import {
   defaultComments,
   defaultIssue,
@@ -9,6 +10,7 @@ import {
 } from "../helpers/defaultData"
 import { relativeDate } from "../helpers/relativeDate"
 import Comment from "./Comment"
+import { Label } from "./Label"
 
 export const IssueNumber = ({
   title,
@@ -37,8 +39,8 @@ export const IssueNumber = ({
           )}
           {statusObject?.label}
         </span>
-        <span className="created-by">u_1</span>
-        opened this issue {relativeDate(createdDate)} . {comments.length}{" "}
+        <span className="created-by">{createdBy}</span>
+        opened this issue {relativeDate(createdDate)} · {comments.length}{" "}
         comments
       </div>
     </header>
@@ -46,29 +48,111 @@ export const IssueNumber = ({
 }
 export default function IssueDetails() {
   const { number } = useParams()
-  //TODO requires api.
-  const issueQuery: typeof defaultIssue = defaultIssue
-  const issueComments = defaultComments
+  const issueQuery = useQuery<IssueNumberProps>(["issues", number], () =>
+    fetchIssueDetail(number!)
+  )
+  // const issueQuery = defaultIssue
+  const issueComments = useQuery<IssueCommentsProps[]>(
+    ["issues", number, "comments"],
+    () => fetchIssueComments(`${number}`)
+  )
+  // const issueComments = defaultComments
+  //TODO Pagination
 
   return (
     <div className="issue-details">
-      <IssueNumber {...issueQuery} />
+      {issueQuery.isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <>{issueQuery.isSuccess && <IssueNumber {...issueQuery.data} />}</>
+      )}
       <main>
         <section>
-          {issueComments &&
-            issueComments.map((comments) => (
+          {issueComments.data &&
+            issueComments.data.map((comments) => (
               <Comment
                 key={comments.id}
-                id={issueQuery.id}
-                issue_id={issueQuery.id}
+                id={comments.id}
+                issue_id={comments.issue_id}
                 comment={comments.comment}
                 createdBy={comments.createdBy}
                 createdDate={comments.createdDate}
               />
             ))}
         </section>
-        <aside></aside>
+        <aside className="issue-detail">
+          <div className="issue-detail--assignee">
+            <div>Assignee</div>
+            {!issueQuery.isLoading && (
+              <span>
+                {issueQuery.isSuccess ? issueQuery.data.assignee : "none"}
+              </span>
+            )}
+          </div>
+          <div className="issue_detail--labels">
+            <div>Labels</div>
+            {!issueQuery.isLoading && (
+              <span>
+                {issueQuery.isSuccess
+                  ? issueQuery.data.labels.map((label) => (
+                      <Label
+                        label={label}
+                        style={{
+                          borderRadius: "999px",
+                          padding: ".1rem .3rem",
+                          border: "solid 1px",
+                          textAlign: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      />
+                    ))
+                  : "none"}
+              </span>
+            )}
+          </div>
+        </aside>
       </main>
     </div>
   )
 }
+
+// <IssueNumber {...issueQuery} />
+
+// <main>
+//   <section>
+//     {issueComments.map((comments) => (
+//       <Comment
+//         key={comments.id}
+//         id={comments.id}
+//         issue_id={comments.issue_id}
+//         comment={comments.comment}
+//         createdBy={comments.createdBy}
+//         createdDate={comments.createdDate}
+//       />
+//     ))}
+//   </section>
+//   <aside className="issue-detail">
+//     <div className="issue-detail--assignee">
+//       <div>Assignee</div>
+//       <span>{issueQuery.assignee ? issueQuery.assignee : "none"}</span>
+//     </div>
+//     <div className="issue_detail--labels">
+//       <div>Labels</div>
+//       <span>
+//         {issueQuery.labels
+//           ? issueQuery.labels.map((label) => (
+//               <Label
+//                 label={label}
+//                 style={{
+//                   borderRadius: "999px",
+//                   padding: ".1rem .3rem",
+//                   border: "solid 1px",
+//                   textAlign: "center",
+//                   whiteSpace: "nowrap",
+//                 }}
+//               />
+//             ))
+//           : "none"}
+//       </span>
+//     </div>
+//   </aside>

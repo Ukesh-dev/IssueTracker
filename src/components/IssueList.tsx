@@ -1,20 +1,10 @@
-import { useState } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState, useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { IssueItem } from "./IssueItem"
-// import fetchWithError from "../helpers/fetchWithError"
 import Loader from "../helpers/Loader"
-import { Issue, Labels } from "../api/types"
-import api from "../api/api"
 import { fetchIssuesWithLabelsAndStaus, searchIssues } from "../api/issuesApi"
-import { GoComment, GoIssueClosed, GoIssueOpened } from "react-icons/go"
-import {
-  defaultIssue,
-  defaultLabels,
-  defaultUsers,
-} from "../helpers/defaultData"
-import { Label } from "./Label"
-import { relativeDate } from "../helpers/relativeDate"
-import { Link } from "react-router-dom"
+import { Issue, SearchType } from "../api/types"
+import { debounceFn } from "../helpers/debounceFn"
 
 type IssueListProp = {
   labels: string[] //array of ids
@@ -29,14 +19,12 @@ export default function IssuesList({
   pageNum,
   setPageNum,
 }: IssueListProp) {
-  const { assignee } = defaultIssue
-  const { profilePictureUrl, name } = defaultUsers[0]
-  // const queryClient = useQueryClient()
-  const issuesQuery = useQuery(
+  const issuesQuery = useQuery<Issue[]>(
     ["issues", { labels, status, pageNum }],
     async ({ signal }) => {
       const statusString = status ? `&status=${status}` : ""
       const labelsString = labels.map((label) => `labels[]=${label}`).join("&")
+      const paginationString = pageNum ? `&page=${pageNum}` : ""
 
       return fetchIssuesWithLabelsAndStaus(statusString, labelsString, {
         signal,
@@ -62,22 +50,33 @@ export default function IssuesList({
     }
   )
   const [searchValue, setSearchValue] = useState("")
+  const [searchQueryValue, setSearchQueryValue] = useState<string>("")
 
-  const searchQuery = useQuery(
-    ["issues", "search", searchValue],
-    ({ signal }) => searchIssues(searchValue, { signal }),
+  const searchQuery = useQuery<SearchType>(
+    ["issues", "search", searchQueryValue],
+    ({ signal }) => searchIssues(searchQueryValue, { signal }),
     {
-      enabled: searchValue.length > 0,
+      enabled: searchQueryValue.length > 0,
     }
   )
+  const initSearchApiRequest = useMemo(() => {
+    return debounceFn(async (q: string) => {
+      setSearchQueryValue(q)
+    }, 1000)
+  }, [])
+  const onChangeValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value
+    setSearchValue(q)
+    initSearchApiRequest(q)
+  }
 
   return (
     <div>
       <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          setSearchValue(event.target.elements.search.value)
-        }}
+      // onSubmit={(event) => {
+      //   event.preventDefault()
+      //   setSearchValue(event.target.elements.search.value)
+      // }}
       >
         <label htmlFor="search">Search Issues</label>
         <input
@@ -85,10 +84,9 @@ export default function IssuesList({
           placeholder="Search"
           name="search"
           id="search"
+          value={searchValue}
           onChange={(event) => {
-            if (event.target.value.length === 0) {
-              setSearchValue("")
-            }
+            onChangeValue(event)
           }}
         />
       </form>
@@ -97,182 +95,139 @@ export default function IssuesList({
           Issues {issuesQuery.fetchStatus === "fetching" ? <Loader /> : null}
         </h3>
       </div>
-      <ul className="issues-list">
-        <li
-        // onMouseEnter={() => {
-        //   queryClient.prefetchQuery(["issues", number.toString()], () =>
-        //     fetchIssueDetail(number)
-        //   )
-        // queryClient.prefetchInfiniteQuery(
-        //   ["issues", number.toString(), "comments"],
-        //   () => fetchWithError(`/api/issues/${number}/comments?page=1`)
-        // )
-        // }}
-        >
-          <div>
-            {status === "done" || status === "cancelled" ? (
-              <GoIssueClosed style={{ color: "red" }} />
-            ) : (
-              <GoIssueOpened style={{ color: "green" }} />
-            )}
-          </div>
-          <div className="issue-content">
-            <span>
-              <Link to={`/issue/1000`}>hello</Link>
-              {defaultLabels.map((label) => (
-                <Label label={label} />
-              ))}
-            </span>
-            <small>#2000 opened {relativeDate(new Date())} `by Ukesh`</small>
-          </div>
-          {assignee ? (
-            <img
-              src={profilePictureUrl}
-              className="assigned-to"
-              alt={`Assigned to`}
-            />
-          ) : null}
-          <span className="comment-count">
-            {/* {commentCount > 0 ? ( */}
+
+      {issuesQuery.isLoading ? (
+        <p style={{ paddingBlock: "1.5rem" }}>Loading...</p>
+      ) : issuesQuery.isError ? (
+        <p style={{ paddingBlock: "1.5rem" }}>
+          There was problem fetching issues
+        </p>
+      ) : searchQuery.fetchStatus === "idle" &&
+        searchQuery.isLoading === true ? (
+        <>
+          <ul className="issues-list">
+            {issuesQuery.data.map((issue) => (
+              <IssueItem
+                key={issue.id}
+                comments={issue.comments}
+                id={issue.id}
+                title={issue.title}
+                number={issue.number}
+                assignee={issue.assignee}
+                commentCount={issue.comments.length}
+                createdBy={issue.createdBy}
+                createdDate={issue.createdDate}
+                labels={issue.labels}
+                status={issue.status}
+              />
+            ))}
+          </ul>
+          {/* <div className="pagination">
+      <button
+        onClick={() => {
+          if (pageNum - 1 > 0) {
+            setPageNum(pageNum - 1)
+          }
+        }}
+        disabled={pageNum === 1}
+      >
+        Previous
+      </button>
+      <p>
+        Page {pageNum} {issuesQuery.isFetching ? "..." : ""}
+      </p>
+      <button
+        disabled={
+          issuesQuery.data?.length === 0 || issuesQuery.isPreviousData
+        }
+        onClick={() => {
+          if (
+            issuesQuery.data?.length !== 0 &&
+            !issuesQuery.isPreviousData
+          ) {
+            setPageNum(pageNum + 1)
+          }
+        }}
+      >
+        Next
+      </button>
+    </div> */}
+        </>
+      ) : (
+        <>
+          <h2>Search Results</h2>
+          {searchQuery.isLoading ? (
+            <p>Loading...</p>
+          ) : (
             <>
-              <GoComment />
-              {282}
+              <p>{searchQuery.data?.count} Results</p>
+              <ul className="issues-list">
+                {searchQuery.data?.items.map((issue) => (
+                  <IssueItem
+                    key={issue.id}
+                    id={issue.id}
+                    comments={issue.comments}
+                    title={issue.title}
+                    number={issue.number}
+                    assignee={issue.assignee}
+                    commentCount={issue.comments.length}
+                    createdBy={issue.createdBy}
+                    createdDate={issue.createdDate}
+                    labels={issue.labels}
+                    status={issue.status}
+                  />
+                ))}
+              </ul>
             </>
-            {/* ) : null} */}
-          </span>
-        </li>
-      </ul>
+          )}
+        </>
+      )}
     </div>
   )
 }
 
-// {issuesQuery.isLoading ? (
-//   <p>Loading...</p>
-// ) : issuesQuery.isError ? (
-//   <p>There was problem fetching issues</p>
-// ) : searchQuery.fetchStatus === "idle" &&
-//   searchQuery.isLoading === true ? (
-//   <>
-//     <ul className="issues-list">
-//       {issuesQuery.data.data.map((issue) => (
-//         <IssueItem
-//           key={issue.id}
-//           comments={issue.comments}
-//           id={issue.id}
-//           title={issue.title}
-//           number={issue.number}
-//           assignee={issue.assignee}
-//           commentCount={issue.comments.length}
-//           createdBy={issue.createdBy}
-//           createdDate={issue.createdDate}
-//           labels={issue.labels}
-//           status={issue.status}
-//         />
-//       ))}
-
-//       <li
-//       // onMouseEnter={() => {
-//       //   queryClient.prefetchQuery(["issues", number.toString()], () =>
-//       //     fetchIssueDetail(number)
-//       //   )
-//       // queryClient.prefetchInfiniteQuery(
-//       //   ["issues", number.toString(), "comments"],
-//       //   () => fetchWithError(`/api/issues/${number}/comments?page=1`)
-//       // )
-//       // }}
-//       >
-//         <div>
-//           {status === "done" || status === "cancelled" ? (
-//             <GoIssueClosed style={{ color: "red" }} />
-//           ) : (
-//             <GoIssueOpened style={{ color: "green" }} />
-//           )}
-//         </div>
-//         <div className="issue-content">
-//           <span>
-//             <Link to={`/issue/1000`}>hello</Link>
-//             {defaultLabels.map((label) => (
-//               <Label label={label} />
-//             ))}
-//           </span>
-//           <small>
-//             #2000 opened {relativeDate(new Date())} `by Ukesh`
-//           </small>
-//         </div>
-//         {assignee ? (
-//           <img
-//             src={profilePictureUrl}
-//             className="assigned-to"
-//             alt={`Assigned to`}
-//           />
-//         ) : null}
-//         <span className="comment-count">
-//           {/* {commentCount > 0 ? ( */}
-//           <>
-//             <GoComment />
-//             {282}
-//           </>
-//           {/* ) : null} */}
-//         </span>
-//       </li>
-//     </ul>
-//     {/* <div className="pagination">
-//       <button
-//         onClick={() => {
-//           if (pageNum - 1 > 0) {
-//             setPageNum(pageNum - 1)
-//           }
-//         }}
-//         disabled={pageNum === 1}
-//       >
-//         Previous
-//       </button>
-//       <p>
-//         Page {pageNum} {issuesQuery.isFetching ? "..." : ""}
-//       </p>
-//       <button
-//         disabled={
-//           issuesQuery.data?.length === 0 || issuesQuery.isPreviousData
-//         }
-//         onClick={() => {
-//           if (
-//             issuesQuery.data?.length !== 0 &&
-//             !issuesQuery.isPreviousData
-//           ) {
-//             setPageNum(pageNum + 1)
-//           }
-//         }}
-//       >
-//         Next
-//       </button>
-//     </div> */}
-//   </>
-// ) : (
-//   <>
-//     <h2>Search Results</h2>
-//     {searchQuery.isLoading ? (
-//       <p>Loading...</p>
-//     ) : (
+// <ul className="issues-list">
+// <li
+// onMouseEnter={() => {
+//   queryClient.prefetchQuery(["issues", number.toString()], () =>
+//     fetchIssueDetail(number)
+//   )
+// queryClient.prefetchInfiniteQuery(
+//   ["issues", number.toString(), "comments"],
+//   () => fetchWithError(`/api/issues/${number}/comments?page=1`)
+// )
+// }}
+//   >
+//     <div>
+//       {status === "done" || status === "cancelled" ? (
+//         <GoIssueClosed style={{ color: "red" }} />
+//       ) : (
+//         <GoIssueOpened style={{ color: "green" }} />
+//       )}
+//     </div>
+//     <div className="issue-content">
+//       <span>
+//         <Link to={`/issue/1000`}>hello</Link>
+//         {defaultLabels.map((label) => (
+//           <Label key={label.id} label={label} />
+//         ))}
+//       </span>
+//       <small>#2000 opened {relativeDate(new Date())} `by Ukesh`</small>
+//     </div>
+//     {assignee ? (
+//       <img
+//         src={profilePictureUrl}
+//         className="assigned-to"
+//         alt={`Assigned to`}
+//       />
+//     ) : null}
+//     <span className="comment-count">
+//       {/* {commentCount > 0 ? ( */}
 //       <>
-//         <p>{searchQuery.data?.data.count} Results</p>
-//         <ul className="issues-list">
-//           {searchQuery.data?.data.items.map((issue) => (
-//             <IssueItem
-//               key={issue.id}
-//               id={issue.id}
-//               comments={issue.comments}
-//               title={issue.title}
-//               number={issue.number}
-//               assignee={issue.assignee}
-//               commentCount={issue.comments.length}
-//               createdBy={issue.createdBy}
-//               createdDate={issue.createdDate}
-//               labels={issue.labels}
-//               status={issue.status}
-//             />
-//           ))}
-//         </ul>
+//         <GoComment />
+//         {282}
 //       </>
-//     )}
-//   </>
-// )}
+//       {/* ) : null} */}
+//     </span>
+//   </li>
+// </ul>

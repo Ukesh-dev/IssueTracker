@@ -26,6 +26,7 @@ export type SearchType = {
 export type IssueNumberProps = {
   title: string
   number: number
+  assignee: string
   status: string | string[]
   createdBy: string
   createdDate: Date
