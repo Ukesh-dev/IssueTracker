@@ -43,7 +43,7 @@ export const searchIssues = async (
   config: AxiosRequestConfig = {}
 ) => {
   return api
-    .get<SearchType>(`/api/search/issues?q=${searchValue}`, config)
+    .get<SearchType>(`/api/search/issues/${searchValue}`, config)
     .then((res) => res.data)
 }
 

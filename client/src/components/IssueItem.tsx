@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom"
 import { GoIssueOpened, GoIssueClosed, GoComment } from "react-icons/go"
 import { relativeDate } from "../helpers/relativeDate"
-import { fetchIssueDetail, fetchLabelsWithId } from "../api/issuesApi"
+import {
+  fetchIssueDetail,
+  fetchIssues,
+  fetchLabelsWithId,
+} from "../api/issuesApi"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Issue, IssueCommentsProps, Labels } from "../api/types"
 import { useUserData } from "../helpers/hooks/useUserData"
@@ -19,7 +23,8 @@ export function IssueItem({
 }: Issue & { commentCount: number }) {
   const assigneeUser = useUserData(assignee)
   assigneeUser && console.log(assigneeUser.data?.profilePictureUrl)
-  const assignedLabels = useQuery<Labels>(["labels"], () =>
+  console.log(label_id)
+  const assignedLabels = useQuery<Labels>(["labels", label_id], () =>
     fetchLabelsWithId(label_id)
   )
   console.log("assignedLables", assignedLabels.data)

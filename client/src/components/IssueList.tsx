@@ -49,7 +49,7 @@ export default function IssuesList({
       keepPreviousData: true,
     }
   )
-  issuesQuery.data && console.log("issueqeury", issuesQuery.data)
+  // issuesQuery.data && console.log("issueqeury", issuesQuery.data)
   const [searchValue, setSearchValue] = useState("")
   const [searchQueryValue, setSearchQueryValue] = useState<string>("")
 
@@ -60,6 +60,7 @@ export default function IssuesList({
       enabled: searchQueryValue.length > 0,
     }
   )
+  // console.log(searchQuery.data)
   const initSearchApiRequest = useMemo(() => {
     return debounceFn(async (q: string) => {
       setSearchQueryValue(q)
@@ -74,10 +75,10 @@ export default function IssuesList({
   return (
     <div>
       <form
-      // onSubmit={(event) => {
-      //   event.preventDefault()
-      //   setSearchValue(event.target.elements.search.value)
-      // }}
+        onSubmit={(event) => {
+          event.preventDefault()
+          // setSearchValue(event.target.elements.search.value)
+        }}
       >
         <label htmlFor="search">Search Issues</label>
         <input

@@ -30,7 +30,9 @@ export const IssueNumber = ({
   createdDate,
   comments,
 }: IssueNumberProps) => {
+  console.log(status)
   const statusObject = possibleStatus.find((pstatus) => pstatus.id === status)
+  console.log(statusObject, "status")
   return (
     <header>
       <h2>
@@ -47,7 +49,8 @@ export const IssueNumber = ({
           ) : (
             <GoIssueOpened />
           )}
-          {statusObject?.label}
+          {/* {statusObject?.label} */}
+          {status}
         </span>
         <span className="created-by">{createdBy}</span>
         opened this issue {relativeDate(createdDate)} · {comments.length}{" "}

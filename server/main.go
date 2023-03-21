@@ -48,6 +48,10 @@ type PossibleStatus struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`
 }
+type SearchType struct {
+	Count int      `json:"count"`
+	Items []Issues `json:"items"`
+}
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -208,6 +212,37 @@ func getPossibleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(PS)
 }
+func getSearch(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var sql = "SELECT d.id, d.title, d.`number`, d.`status`, u1.user_name AS assignee, d.label_id, " +
+		"(SELECT COUNT(*) FROM issues_comments s WHERE s.issue_id = d.id ) AS a, u2.user_name AS created_by, " +
+		"d.created_date FROM issues d LEFT JOIN users u1 ON d.assignee_id = u1.id " +
+		"LEFT JOIN users u2 ON d.created_by_id = u2.id WHERE d.title LIKE ?"
+
+	enableCors(&w)
+	var issues []Issues
+	var res SearchType
+
+	params := mux.Vars(r)
+
+	result, err := db.Query(sql, "%"+params["q"]+"%")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer result.Close()
+	for result.Next() {
+		var i Issues
+		err := result.Scan(&i.ID, &i.Title, &i.Number, &i.Status, &i.Assignee, &i.LabelID, &i.Comments, &i.CreatedBy,
+			&i.CreatedDate)
+		if err != nil {
+			panic(err.Error())
+		}
+		issues = append(issues, i)
+	}
+	res.Count = len(issues)
+	res.Items = issues
+	json.NewEncoder(w).Encode(res)
+}
 
 var db *sql.DB
 var err error
@@ -231,5 +266,7 @@ func main() {
 	router.HandleFunc("/api/users/{id}", getUser).Methods("GET")
 
 	router.HandleFunc("/api/issues/{id}/comments", getCommentsByIssuesId).Methods("GET")
+	router.HandleFunc("/api/search/issues/{q}", getSearch).Methods("GET")
+
 	http.ListenAndServe(":8000", router)
 }
