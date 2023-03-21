@@ -8,7 +8,7 @@ const getEnvironment = () => {
 }
 
 const axiosParams = {
-  baseURL: getEnvironment() === "development" ? "http://127.0.0.1:5173" : "/",
+  baseURL: getEnvironment() === "development" ? "http://localhost:8000" : "/",
 }
 
 const axiosInstance = axios.create(axiosParams)

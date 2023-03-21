@@ -266,7 +266,7 @@ form input:focus {
 }
 
 .labels {
-  background-color: #212121;
+  background-color: #1c2128;
   padding: 1.5rem;
   border: 1px solid gray;
   border-radius: 10px;
@@ -277,9 +277,13 @@ form input:focus {
 .labels ul {
   list-style: none;
   padding: 0;
+  padding-block: 1rem;
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+.labels ul li {
+  margin-right: 0.8rem;
 }
 .status {
   display: flex;

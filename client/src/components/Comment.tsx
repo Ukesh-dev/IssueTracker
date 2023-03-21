@@ -8,11 +8,11 @@ export default function Comment({
   comment,
   createdBy,
   createdDate,
+  createdById,
 }: IssueCommentsProps) {
   const commentQuery = useQuery<User>(["comment", { createdBy }], () =>
-    fetchUsers(createdBy)
+    fetchUsers(createdById)
   )
-  // const commentQuery = defaultUsers
 
   if (commentQuery.isLoading)
     return (
@@ -25,18 +25,10 @@ export default function Comment({
 
   return (
     <div className="comment">
-      {/* <img src={commentQuery[0].profilePictureUrl} alt="Commenter Avatar" />
-      <div>
-        <div className="comment-header">
-          <span>{commentQuery[0].name}</span> commented{" "}
-          <span>{relativeDate(createdDate)}</span>
-        </div>
-        <div className="comment-body">{comment}</div>
-      </div> */}
-
       <img src={commentQuery.data?.profilePictureUrl} alt="Commenter Avatar" />
       <div>
         <div className="comment-header">
+          {/* <span>{commentQuery.data?.name}</span> commented{" "} */}
           <span>{commentQuery.data?.name}</span> commented{" "}
           <span>{relativeDate(createdDate)}</span>
         </div>

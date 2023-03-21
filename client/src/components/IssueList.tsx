@@ -49,6 +49,7 @@ export default function IssuesList({
       keepPreviousData: true,
     }
   )
+  issuesQuery.data && console.log("issueqeury", issuesQuery.data)
   const [searchValue, setSearchValue] = useState("")
   const [searchQueryValue, setSearchQueryValue] = useState<string>("")
 
@@ -113,11 +114,12 @@ export default function IssuesList({
                 id={issue.id}
                 title={issue.title}
                 number={issue.number}
-                assignee={issue.assignee}
-                commentCount={issue.comments.length}
+                // assignee={issue.assignee}
+                assignee={issue.id}
+                commentCount={issue.comments}
                 createdBy={issue.createdBy}
                 createdDate={issue.createdDate}
-                labels={issue.labels}
+                label_id={issue.label_id}
                 status={issue.status}
               />
             ))}
@@ -170,10 +172,10 @@ export default function IssuesList({
                     title={issue.title}
                     number={issue.number}
                     assignee={issue.assignee}
-                    commentCount={issue.comments.length}
+                    commentCount={issue.comments}
                     createdBy={issue.createdBy}
                     createdDate={issue.createdDate}
-                    labels={issue.labels}
+                    label_id={issue.label_id}
                     status={issue.status}
                   />
                 ))}
@@ -185,49 +187,3 @@ export default function IssuesList({
     </div>
   )
 }
-
-// <ul className="issues-list">
-// <li
-// onMouseEnter={() => {
-//   queryClient.prefetchQuery(["issues", number.toString()], () =>
-//     fetchIssueDetail(number)
-//   )
-// queryClient.prefetchInfiniteQuery(
-//   ["issues", number.toString(), "comments"],
-//   () => fetchWithError(`/api/issues/${number}/comments?page=1`)
-// )
-// }}
-//   >
-//     <div>
-//       {status === "done" || status === "cancelled" ? (
-//         <GoIssueClosed style={{ color: "red" }} />
-//       ) : (
-//         <GoIssueOpened style={{ color: "green" }} />
-//       )}
-//     </div>
-//     <div className="issue-content">
-//       <span>
-//         <Link to={`/issue/1000`}>hello</Link>
-//         {defaultLabels.map((label) => (
-//           <Label key={label.id} label={label} />
-//         ))}
-//       </span>
-//       <small>#2000 opened {relativeDate(new Date())} `by Ukesh`</small>
-//     </div>
-//     {assignee ? (
-//       <img
-//         src={profilePictureUrl}
-//         className="assigned-to"
-//         alt={`Assigned to`}
-//       />
-//     ) : null}
-//     <span className="comment-count">
-//       {/* {commentCount > 0 ? ( */}
-//       <>
-//         <GoComment />
-//         {282}
-//       </>
-//       {/* ) : null} */}
-//     </span>
-//   </li>
-// </ul>

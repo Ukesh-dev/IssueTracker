@@ -1,8 +1,18 @@
 import { useQueries, useQuery } from "@tanstack/react-query"
+import { useState } from "react"
 import { GoIssueClosed, GoIssueOpened } from "react-icons/go"
-import { useParams } from "react-router-dom"
-import { fetchIssueComments, fetchIssueDetail } from "../api/issuesApi"
-import { Issue, IssueCommentsProps, IssueNumberProps } from "../api/types"
+import { useParams, useSearchParams } from "react-router-dom"
+import {
+  fetchIssueComments,
+  fetchIssueDetail,
+  fetchLabelsWithId,
+} from "../api/issuesApi"
+import {
+  Issue,
+  IssueCommentsProps,
+  IssueNumberProps,
+  Labels,
+} from "../api/types"
 import {
   defaultComments,
   defaultIssue,
@@ -48,15 +58,20 @@ export const IssueNumber = ({
 }
 export default function IssueDetails() {
   const { number } = useParams()
-  const issueQuery = useQuery<IssueNumberProps>(["issues", number], () =>
-    fetchIssueDetail(number!)
+  const [labelsData, setLabelsData] = useState<Labels | undefined>()
+  const issueQuery = useQuery<IssueNumberProps>(
+    ["issues", number],
+    async () => {
+      const data = await fetchIssueDetail(number!)
+      const labelsData = await fetchLabelsWithId(data.label_id)
+      setLabelsData(labelsData)
+      return data
+    }
   )
-  // const issueQuery = defaultIssue
   const issueComments = useQuery<IssueCommentsProps[]>(
     ["issues", number, "comments"],
     () => fetchIssueComments(`${number}`)
   )
-  // const issueComments = defaultComments
   //TODO Pagination
 
   return (
@@ -73,6 +88,7 @@ export default function IssueDetails() {
               <Comment
                 key={comments.id}
                 id={comments.id}
+                createdById={comments.createdById}
                 issue_id={comments.issue_id}
                 comment={comments.comment}
                 createdBy={comments.createdBy}
@@ -93,20 +109,21 @@ export default function IssueDetails() {
             <div>Labels</div>
             {!issueQuery.isLoading && (
               <span>
-                {issueQuery.isSuccess
-                  ? issueQuery.data.labels.map((label) => (
-                      <Label
-                        label={label}
-                        style={{
-                          borderRadius: "999px",
-                          padding: ".1rem .3rem",
-                          border: "solid 1px",
-                          textAlign: "center",
-                          whiteSpace: "nowrap",
-                        }}
-                      />
-                    ))
-                  : "none"}
+                {labelsData ? (
+                  //  ? labelsData.map((label) => (
+                  <Label
+                    label={labelsData}
+                    style={{
+                      borderRadius: "999px",
+                      padding: ".1rem .3rem",
+                      border: "solid 1px",
+                      textAlign: "center",
+                      whiteSpace: "nowrap",
+                    }}
+                  />
+                ) : (
+                  "none"
+                )}
               </span>
             )}
           </div>
@@ -115,44 +132,3 @@ export default function IssueDetails() {
     </div>
   )
 }
-
-// <IssueNumber {...issueQuery} />
-
-// <main>
-//   <section>
-//     {issueComments.map((comments) => (
-//       <Comment
-//         key={comments.id}
-//         id={comments.id}
-//         issue_id={comments.issue_id}
-//         comment={comments.comment}
-//         createdBy={comments.createdBy}
-//         createdDate={comments.createdDate}
-//       />
-//     ))}
-//   </section>
-//   <aside className="issue-detail">
-//     <div className="issue-detail--assignee">
-//       <div>Assignee</div>
-//       <span>{issueQuery.assignee ? issueQuery.assignee : "none"}</span>
-//     </div>
-//     <div className="issue_detail--labels">
-//       <div>Labels</div>
-//       <span>
-//         {issueQuery.labels
-//           ? issueQuery.labels.map((label) => (
-//               <Label
-//                 label={label}
-//                 style={{
-//                   borderRadius: "999px",
-//                   padding: ".1rem .3rem",
-//                   border: "solid 1px",
-//                   textAlign: "center",
-//                   whiteSpace: "nowrap",
-//                 }}
-//               />
-//             ))
-//           : "none"}
-//       </span>
-//     </div>
-//   </aside>

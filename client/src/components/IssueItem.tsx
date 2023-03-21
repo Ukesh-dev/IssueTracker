@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom"
 import { GoIssueOpened, GoIssueClosed, GoComment } from "react-icons/go"
 import { relativeDate } from "../helpers/relativeDate"
-import { fetchIssueDetail } from "../api/issuesApi"
-import { useQueryClient } from "@tanstack/react-query"
-import { Issue, IssueCommentsProps } from "../api/types"
+import { fetchIssueDetail, fetchLabelsWithId } from "../api/issuesApi"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Issue, IssueCommentsProps, Labels } from "../api/types"
 import { useUserData } from "../helpers/hooks/useUserData"
 import { Label } from "./Label"
 
@@ -14,10 +14,15 @@ export function IssueItem({
   commentCount,
   createdBy,
   createdDate,
-  labels,
+  label_id,
   status,
 }: Issue & { commentCount: number }) {
   const assigneeUser = useUserData(assignee)
+  assigneeUser && console.log(assigneeUser.data?.profilePictureUrl)
+  const assignedLabels = useQuery<Labels>(["labels"], () =>
+    fetchLabelsWithId(label_id)
+  )
+  console.log("assignedLables", assignedLabels.data)
   const createdByUser = useUserData(createdBy)
   const queryClient = useQueryClient()
   return (
@@ -41,10 +46,10 @@ export function IssueItem({
       </div>
       <div className="issue-content">
         <span>
-          <Link to={`/issue/${number}`}>{title}</Link>
-          {labels.map((label) => (
-            <Label label={label} />
-          ))}
+          <Link to={`/api/issues/${number}`}>{title}</Link>
+          {assignedLabels.data && (
+            <Label key={assignedLabels.data.id} label={assignedLabels.data} />
+          )}
         </span>
         <small>
           #{number} opened {relativeDate(createdDate)}{" "}

@@ -34,6 +34,9 @@ export const fetchUsers = async (userId: string) =>
 export const fetchAllLabels = async () => {
   return api.get<Labels[]>("/api/labels").then((res) => res.data)
 }
+export const fetchLabelsWithId = async (labelId: string) => {
+  return api.get<Labels>(`/api/labels/${labelId}`).then((res) => res.data)
+}
 
 export const searchIssues = async (
   searchValue: string,

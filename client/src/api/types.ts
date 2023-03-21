@@ -11,10 +11,10 @@ export type Issue = {
   number: number
   status: string
   assignee: string
-  comments: string[]
+  comments: number
   createdBy: string
   createdDate: Date
-  labels: Labels[]
+  label_id: string
 }
 export type Labels = { id: string; name: string; color: string }
 
@@ -31,12 +31,13 @@ export type IssueNumberProps = {
   createdBy: string
   createdDate: Date
   comments: string[]
-  labels: Labels[]
+  label_id: string
 }
 export type IssueCommentsProps = {
   comment: string
   createdBy: string
   createdDate: Date
+  createdById: string
   id: string
   issue_id: string
 }

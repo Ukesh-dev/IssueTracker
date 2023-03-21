@@ -8,8 +8,7 @@ type LabelListProps = {
   toggle: (labelId: Labels) => void
 }
 export default function LabelList({ selected, toggle }: LabelListProps) {
-  const labelsQuery = useQuery<Labels[]>(["labels"], fetchAllLabels)
-  // const labelsQuery = useLabelsData()
+  const labelsQuery = useQuery<Labels[]>(["labelsData"], fetchAllLabels)
   return (
     <div className="labels">
       <h3>Labels</h3>
@@ -17,8 +16,8 @@ export default function LabelList({ selected, toggle }: LabelListProps) {
         <p>Loading...</p>
       ) : (
         <ul>
-          {labelsQuery.data &&
-            labelsQuery.data.map((label) => (
+          {labelsQuery.isSuccess &&
+            labelsQuery.data?.map((label) => (
               <li key={label.id}>
                 <button
                   onClick={() => toggle(label)}
